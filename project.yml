@@ -26,11 +26,12 @@
   :executable: .exe
 :module_generator:
  :naming: bumpy
-
 :paths:
   :test:
     - +:test/**
     - -:test/support
+  :include:
+    - Inc/**
   :source:
     - src/**
   :support:

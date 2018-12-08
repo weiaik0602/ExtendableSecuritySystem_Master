@@ -1,5 +1,9 @@
 #ifndef _MASTERFUNC_H
 #define _MASTERFUNC_H
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include "mockFunc.h"
 
 typedef enum sm_state sm_state;
 enum sm_state{
@@ -23,7 +27,7 @@ struct uart_data{
 };
 
 //define
-#define MAX_SLAVE 5
+#define MAX_SLAVE 2
 #define UART_SIZE 10
 #define SPI_SIZE 10
 #define BUFFER_SIZE 10
@@ -36,16 +40,24 @@ struct uart_data{
 #define ACTION_Open 0
 #define ACTION_Close 1
 //reply
-#define REPLY_Here 0
+#define REPLY_Here 0x7
 #define REPLY_NA 0xF
 
 //variables
-sm_state master_sm_state;
+extern volatile sm_state master_sm_state;
+extern volatile uart_data uart_receive_buffer[BUFFER_SIZE],uart_receive_buffer[BUFFER_SIZE];
+extern volatile uint8_t uart_receive[UART_SIZE];
+extern volatile uint8_t uart_receive_position, uart_use_position;
+extern volatile uint8_t slave_record;
 
-
-
+//temp variables
+extern uint8_t datasend[3];
+extern uint8_t dataReceive[3];
 //Functions
-
+void Master_StateMachine();
+void UART_Receive_Buffer();
+void Init_Func();
+void Idle_Func();
 
 
 #endif // _MASTERFUNC_H

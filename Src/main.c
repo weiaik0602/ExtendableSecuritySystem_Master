@@ -213,7 +213,7 @@ void Slave_Disable(uint8_t number){
 }
 
 void SPI_SendReceive(uint8_t* datasend,uint8_t* dataReceive){
-
+  
 }
 /* USER CODE END 4 */
 
