@@ -49,7 +49,7 @@ extern volatile uart_data uart_receive_buffer[BUFFER_SIZE],uart_receive_buffer[B
 extern volatile uint8_t uart_receive[UART_SIZE];
 extern volatile uint8_t uart_receive_position, uart_use_position;
 extern volatile uint8_t slave_record;
-
+extern volatile uint8_t spi_receive[10];
 //temp variables
 extern uint8_t datasend[3];
 extern uint8_t dataReceive[3];
