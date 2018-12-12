@@ -28,17 +28,17 @@ struct uart_data{
 
 //define
 #define MAX_SLAVE 2
-#define UART_SIZE 10
-#define SPI_SIZE 10
-#define BUFFER_SIZE 10
+#define UART_SIZE 4
+#define SPI_SIZE 5
+#define BUFFER_SIZE 5
 //module
 #define MODULE_Self 0
 #define MODULE_Buzzer 1
 #define MODULE_Lock 2
 #define MODULE_Led 3
 //action
-#define ACTION_Open 0
-#define ACTION_Close 1
+#define ACTION_Open 0xa
+#define ACTION_Close 0xb
 //reply
 #define REPLY_Here 0x7
 #define REPLY_NA 0xF
@@ -49,7 +49,7 @@ extern volatile uart_data uart_receive_buffer[BUFFER_SIZE],uart_receive_buffer[B
 extern volatile uint8_t uart_receive[UART_SIZE];
 extern volatile uint8_t uart_receive_position, uart_use_position;
 extern volatile uint8_t slave_record;
-extern volatile uint8_t spi_receive[10];
+extern volatile uint8_t spi_receive[3];
 //temp variables
 extern uint8_t datasend[3];
 extern uint8_t dataReceive[3];

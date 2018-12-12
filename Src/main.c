@@ -6,7 +6,7 @@
   ******************************************************************************
   ** This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
+  * USER CODE END. Other portions of this file, whether
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
@@ -48,7 +48,14 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+#define SPI1_En HAL_GPIO_WritePin(S1_GPIO_Port, S1_Pin, RESET)
+#define SPI1_Dis HAL_GPIO_WritePin(S1_GPIO_Port, S1_Pin, SET)
 
+#define SPI2_En HAL_GPIO_WritePin(S2_GPIO_Port, S2_Pin, RESET)
+#define SPI2_Dis HAL_GPIO_WritePin(S2_GPIO_Port, S2_Pin, SET)
+
+#define SPI3_En HAL_GPIO_WritePin(S3_GPIO_Port, S3_Pin, RESET)
+#define SPI3_Dis HAL_GPIO_WritePin(S3_GPIO_Port, S3_Pin, SET)
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -63,10 +70,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi1;
-DMA_HandleTypeDef hdma_spi1_rx;
 
 UART_HandleTypeDef huart1;
-DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -76,7 +81,6 @@ DMA_HandleTypeDef hdma_usart1_rx;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_DMA_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
@@ -84,10 +88,14 @@ static void MX_USART1_UART_Init(void);
 extern void Slave_Enable(uint8_t number);
 extern void Slave_Disable(uint8_t number);
 extern void SPI_SendReceive(uint8_t* datasend,uint8_t* dataReceive);
+extern void SPI_TEST();
+extern void DMA2S2_Func(uart_data data);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+uint8_t rubbish[3];
+volatile uint8_t pRxData[5] = {0,0,0,0,0};
 
 /* USER CODE END 0 */
 
@@ -119,36 +127,33 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  HAL_SPI_Receive_IT(&hspi1, &spi_receive[0], 3);
-  //HAL_SPI_Receive_DMA(&hspi1, &spi_receive[0], 3);
+  //HAL_UART_Receive_IT(&huart1, (uint8_t*)&uart_receive,4);
+
+  //HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&rubbish,(uint8_t*)&pRxData, 3, 200);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint8_t pTxDataO[]={MODULE_Led, 1, ACTION_Open};
-  uint8_t pTxDataC[]={MODULE_Led, 1, ACTION_Close};
-  uint8_t pRxData[5] = {0,0,0,0,0};
+//  uint8_t pTxDataO[]={MODULE_Led, 1, ACTION_Open};
+//  uint8_t pTxDataC[]={MODULE_Led, 1, ACTION_Close};
+//  uint8_t pRxData[5] = {0,0,0,0,0};
 
   while (1)
   {
-	  HAL_GPIO_WritePin(S1_GPIO_Port, S1_Pin, RESET);
-	  HAL_SPI_Transmit(&hspi1, &pTxDataO, 3, 200);
-	  //HAL_SPI_Receive(&hspi1,&pRxData,3,1000);
-	  HAL_Delay(200);
-	  //HAL_SPI_Receive(&hspi1,&pRxData,3,500);
-	  HAL_GPIO_WritePin(S1_GPIO_Port, S1_Pin, SET);
-
-
-	  HAL_GPIO_WritePin(S1_GPIO_Port, S1_Pin, RESET);
-	  volatile HAL_StatusTypeDef stat=HAL_SPI_Transmit(&hspi1, &pTxDataC, 3,200);
-	  HAL_Delay(200);
-	  //HAL_SPI_Receive(&hspi1,&pRxData,3,500);
-	  HAL_GPIO_WritePin(S1_GPIO_Port, S1_Pin, SET);
-	  //HAL_SPI_Transmit(&hspi1, &pTxDataO, 3, 200);
+//	  int a=1;
+//	  int b = 2;
+//	  int c = 3;
+//	  int d = 4;
+	  uint8_t test[] ={1,2,3,4};
+	  uint8_t* words = "Hello\n";
+	  HAL_UART_Transmit(&huart1, (uint8_t*)words,6,500);
+	  HAL_Delay(500);
+//	  HAL_GPIO_WritePin(S1_GPIO_Port, S1_Pin, RESET);
+//	  HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&pTxDataC,(uint8_t*)&pRxData, 3, 200);
+//	  HAL_GPIO_WritePin(S1_GPIO_Port, S1_Pin, SET);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -172,21 +177,11 @@ void SystemClock_Config(void)
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
   /**Initializes the CPU, AHB and APB busses clocks 
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 15;
-  RCC_OscInitStruct.PLL.PLLN = 108;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /**Activate the Over-Drive mode 
-  */
-  if (HAL_PWREx_EnableOverDrive() != HAL_OK)
   {
     Error_Handler();
   }
@@ -194,12 +189,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
     Error_Handler();
   }
@@ -228,7 +223,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -259,7 +254,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 9600;
+  huart1.Init.BaudRate = 115200;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -273,24 +268,6 @@ static void MX_USART1_UART_Init(void)
   /* USER CODE BEGIN USART1_Init 2 */
 
   /* USER CODE END USART1_Init 2 */
-
-}
-
-/** 
-  * Enable DMA controller clock
-  */
-static void MX_DMA_Init(void) 
-{
-  /* DMA controller clock enable */
-  __HAL_RCC_DMA2_CLK_ENABLE();
-
-  /* DMA interrupt init */
-  /* DMA2_Stream0_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
-  /* DMA2_Stream2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
 
 }
 
@@ -309,28 +286,64 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOE_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, S1_Pin|S2_Pin|S3_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOE, S1_Pin|S2_Pin|S3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : S1_Pin S2_Pin S3_Pin */
   GPIO_InitStruct.Pin = S1_Pin|S2_Pin|S3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
 }
 
 /* USER CODE BEGIN 4 */
 void Slave_Enable(uint8_t number){
-	//HAL_GPIO_WritePin();
+	switch(number){
+    case 1:
+      SPI1_En;
+      break;
+    case 2:
+      SPI2_En;
+      break;
+    case 3:
+      SPI3_En;
+      break;
+  }
 }
 
 void Slave_Disable(uint8_t number){
-	//HAL_GPIO_WritePin();
+  switch(number){
+    case 1:
+      SPI1_Dis;
+      break;
+    case 2:
+      SPI2_Dis;
+      break;
+    case 3:
+      SPI3_Dis;
+      break;
+  }
 }
 
 void SPI_SendReceive(uint8_t* datasend,uint8_t* dataReceive){
-  
+
+}
+void DMA2S2_Func(uart_data data){
+  Slave_Enable(data.board);
+	HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&(data.module),(uint8_t*)&spi_receive, 3, 200);
+	HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&(data.module),(uint8_t*)&spi_receive, 3, 200);
+  Slave_Disable(data.board);
+}
+void SPI_TEST(){
+	uint8_t pTxDataO[]={MODULE_Led, 1, ACTION_Open};
+	uint8_t pTxDataC[]={MODULE_Led, 1, ACTION_Close};
+	uint8_t test[]={1, 2, 3};
+//	HAL_GPIO_WritePin(S1_GPIO_Port, S1_Pin, RESET);
+//	HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&pTxDataO,(uint8_t*)&pRxData, 3, 200);
+//	HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&pTxDataO,(uint8_t*)&pRxData, 3, 200);
+//	HAL_GPIO_WritePin(S1_GPIO_Port, S1_Pin, SET);
+	HAL_UART_Transmit(&huart1, (uint8_t *)&test,3,50);
 }
 /* USER CODE END 4 */
 
