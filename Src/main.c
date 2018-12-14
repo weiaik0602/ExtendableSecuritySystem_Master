@@ -72,6 +72,7 @@
 SPI_HandleTypeDef hspi1;
 
 UART_HandleTypeDef huart1;
+DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -81,6 +82,7 @@ UART_HandleTypeDef huart1;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
@@ -127,10 +129,11 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  //HAL_UART_Receive_IT(&huart1, (uint8_t*)&uart_receive,4);
+  HAL_UART_Receive_DMA(&huart1, (uint8_t*)&uart_receive,4);
 
   //HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&rubbish,(uint8_t*)&pRxData, 3, 200);
   /* USER CODE END 2 */
@@ -147,10 +150,10 @@ int main(void)
 //	  int b = 2;
 //	  int c = 3;
 //	  int d = 4;
-	  uint8_t test[] ={1,2,3,4};
-	  uint8_t* words = "Hello\n";
-	  HAL_UART_Transmit(&huart1, (uint8_t*)words,6,500);
-	  HAL_Delay(500);
+//	  uint8_t test[] ={1,2,3,4};
+//	  uint8_t* words = "Hello\n";
+//	  HAL_UART_Transmit(&huart1, (uint8_t*)words,6,500);
+//	  HAL_Delay(500);
 //	  HAL_GPIO_WritePin(S1_GPIO_Port, S1_Pin, RESET);
 //	  HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&pTxDataC,(uint8_t*)&pRxData, 3, 200);
 //	  HAL_GPIO_WritePin(S1_GPIO_Port, S1_Pin, SET);
@@ -254,7 +257,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
+  huart1.Init.BaudRate = 9600;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -268,6 +271,21 @@ static void MX_USART1_UART_Init(void)
   /* USER CODE BEGIN USART1_Init 2 */
 
   /* USER CODE END USART1_Init 2 */
+
+}
+
+/** 
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void) 
+{
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
 
 }
 
@@ -330,10 +348,13 @@ void SPI_SendReceive(uint8_t* datasend,uint8_t* dataReceive){
 
 }
 void DMA2S2_Func(uart_data data){
-  Slave_Enable(data.board);
-	HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&(data.module),(uint8_t*)&spi_receive, 3, 200);
-	HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&(data.module),(uint8_t*)&spi_receive, 3, 200);
-  Slave_Disable(data.board);
+  Slave_Enable(uart_receive[0]);
+  HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&(uart_receive[1]),(uint8_t*)&spi_receive, 3, 200);
+  HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&(uart_receive[1]),(uint8_t*)&spi_receive, 3, 200);
+  Slave_Disable(uart_receive[0]);
+  uint8_t pData[]={uart_receive[0],spi_receive[0],spi_receive[1],spi_receive[2]};
+  HAL_UART_Transmit(&huart1, (uint8_t*)&pData, 4,200);
+
 }
 void SPI_TEST(){
 	uint8_t pTxDataO[]={MODULE_Led, 1, ACTION_Open};
