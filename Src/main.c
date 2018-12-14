@@ -71,7 +71,9 @@
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi1;
 
+UART_HandleTypeDef huart8;
 UART_HandleTypeDef huart1;
+DMA_HandleTypeDef hdma_uart8_rx;
 DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE BEGIN PV */
@@ -85,12 +87,11 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_UART8_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 extern void Slave_Enable(uint8_t number);
 extern void Slave_Disable(uint8_t number);
-extern void SPI_SendReceive(uint8_t* datasend,uint8_t* dataReceive);
-extern void SPI_TEST();
 extern void DMA2S2_Func(uart_data data);
 /* USER CODE END PFP */
 
@@ -132,6 +133,7 @@ int main(void)
   MX_DMA_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
+  MX_UART8_Init();
   /* USER CODE BEGIN 2 */
   HAL_UART_Receive_DMA(&huart1, (uint8_t*)&uart_receive,4);
 
@@ -143,20 +145,14 @@ int main(void)
 //  uint8_t pTxDataO[]={MODULE_Led, 1, ACTION_Open};
 //  uint8_t pTxDataC[]={MODULE_Led, 1, ACTION_Close};
 //  uint8_t pRxData[5] = {0,0,0,0,0};
-
+  uint8_t dataSend[3] = {1,2,3};
   while (1)
   {
-//	  int a=1;
-//	  int b = 2;
-//	  int c = 3;
-//	  int d = 4;
-//	  uint8_t test[] ={1,2,3,4};
-//	  uint8_t* words = "Hello\n";
-//	  HAL_UART_Transmit(&huart1, (uint8_t*)words,6,500);
-//	  HAL_Delay(500);
-//	  HAL_GPIO_WritePin(S1_GPIO_Port, S1_Pin, RESET);
-//	  HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&pTxDataC,(uint8_t*)&pRxData, 3, 200);
-//	  HAL_GPIO_WritePin(S1_GPIO_Port, S1_Pin, SET);
+
+//	  Slave_Enable(1);
+//	  HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&(dataSend[0]),(uint8_t*)&spi_receive, 3, 200);
+//	  Slave_Disable(1);
+//	  HAL_Delay(200);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -226,7 +222,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -238,6 +234,39 @@ static void MX_SPI1_Init(void)
   /* USER CODE BEGIN SPI1_Init 2 */
 
   /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
+  * @brief UART8 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_UART8_Init(void)
+{
+
+  /* USER CODE BEGIN UART8_Init 0 */
+
+  /* USER CODE END UART8_Init 0 */
+
+  /* USER CODE BEGIN UART8_Init 1 */
+
+  /* USER CODE END UART8_Init 1 */
+  huart8.Instance = UART8;
+  huart8.Init.BaudRate = 9600;
+  huart8.Init.WordLength = UART_WORDLENGTH_8B;
+  huart8.Init.StopBits = UART_STOPBITS_1;
+  huart8.Init.Parity = UART_PARITY_NONE;
+  huart8.Init.Mode = UART_MODE_TX_RX;
+  huart8.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart8.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN UART8_Init 2 */
+
+  /* USER CODE END UART8_Init 2 */
 
 }
 
@@ -281,8 +310,12 @@ static void MX_DMA_Init(void)
 {
   /* DMA controller clock enable */
   __HAL_RCC_DMA2_CLK_ENABLE();
+  __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* DMA1_Stream6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
   /* DMA2_Stream2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
@@ -343,28 +376,16 @@ void Slave_Disable(uint8_t number){
       break;
   }
 }
-
-void SPI_SendReceive(uint8_t* datasend,uint8_t* dataReceive){
-
-}
 void DMA2S2_Func(uart_data data){
   Slave_Enable(uart_receive[0]);
-  HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&(uart_receive[1]),(uint8_t*)&spi_receive, 3, 200);
-  HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&(uart_receive[1]),(uint8_t*)&spi_receive, 3, 200);
+  //HAL_SPI_Transmit(&hspi1, (uint8_t*)&(uart_receive[1]), 3, 200);
+  //HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&(uart_receive[1]),(uint8_t*)&spi_receive, 3, 200);
+  uint8_t dataSend[]={uart_receive[1],uart_receive[2],uart_receive[3]};
+  HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&(dataSend[0]),(uint8_t*)&spi_receive, 3, 200);
   Slave_Disable(uart_receive[0]);
   uint8_t pData[]={uart_receive[0],spi_receive[0],spi_receive[1],spi_receive[2]};
   HAL_UART_Transmit(&huart1, (uint8_t*)&pData, 4,200);
 
-}
-void SPI_TEST(){
-	uint8_t pTxDataO[]={MODULE_Led, 1, ACTION_Open};
-	uint8_t pTxDataC[]={MODULE_Led, 1, ACTION_Close};
-	uint8_t test[]={1, 2, 3};
-//	HAL_GPIO_WritePin(S1_GPIO_Port, S1_Pin, RESET);
-//	HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&pTxDataO,(uint8_t*)&pRxData, 3, 200);
-//	HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&pTxDataO,(uint8_t*)&pRxData, 3, 200);
-//	HAL_GPIO_WritePin(S1_GPIO_Port, S1_Pin, SET);
-	HAL_UART_Transmit(&huart1, (uint8_t *)&test,3,50);
 }
 /* USER CODE END 4 */
 
