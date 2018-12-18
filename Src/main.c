@@ -146,6 +146,7 @@ int main(void)
 //  uint8_t pTxDataC[]={MODULE_Led, 1, ACTION_Close};
 //  uint8_t pRxData[5] = {0,0,0,0,0};
   uint8_t dataSend[3] = {1,2,3};
+  //Init_Func();
   while (1)
   {
 
@@ -222,7 +223,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -377,16 +378,20 @@ void Slave_Disable(uint8_t number){
   }
 }
 void DMA2S2_Func(uart_data data){
-  Slave_Enable(uart_receive[0]);
-  //HAL_SPI_Transmit(&hspi1, (uint8_t*)&(uart_receive[1]), 3, 200);
-//HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&(uart_receive[1]),(uint8_t*)&spi_receive, 3, 200);
+//	Slave_Enable(uart_receive[0]);
+//	HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&(uart_receive[1]),(uint8_t*)&spi_receive, 3, 500);
+//	HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&(uart_receive[1]),(uint8_t*)&spi_receive, 3, 20);
+//	Slave_Disable(uart_receive[0]);
+//	uint8_t pData[]={uart_receive[0],spi_receive[0],spi_receive[1],spi_receive[2]};
+//	HAL_UART_Transmit(&huart1, (uint8_t*)&pData, 4,200);
 
-  uint8_t dataSend[]={uart_receive[1],uart_receive[2],uart_receive[3]};
-  HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&(uart_receive[1]),(uint8_t*)&spi_receive, 3, 200);
-  HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&(uart_receive[1]),(uint8_t*)&spi_receive, 3, 200);
-  Slave_Disable(uart_receive[0]);
-  uint8_t pData[]={uart_receive[0],spi_receive[0],spi_receive[1],spi_receive[2]};
-  HAL_UART_Transmit(&huart1, (uint8_t*)&(uart_receive[0]), 4,200);
+	Slave_Enable(uart_receive[0]);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)&(uart_receive[1]), 3,100);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)&(uart_receive[1]), 3,100);
+	HAL_SPI_Receive(&hspi1, (uint8_t*)&(spi_receive[0]), 3,5000);
+	Slave_Disable(uart_receive[0]);
+	uint8_t pData[]={uart_receive[0],spi_receive[0],spi_receive[1],spi_receive[2]};
+	HAL_UART_Transmit(&huart1, (uint8_t*)&pData, 4,200);
 
 }
 /* USER CODE END 4 */
