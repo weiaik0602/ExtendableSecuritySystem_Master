@@ -147,7 +147,7 @@ int main(void)
 //  uint8_t pRxData[5] = {0,0,0,0,0};
   uint8_t dataSend[3] = {1,2,3};
   HAL_SPI_Transmit(&hspi1, (uint8_t*)&(rubbish[0]), 3,20);
-  HAL_SPI_Receive(&hspi1, (uint8_t*)&(dataSend[0]), 3,20);
+//  HAL_SPI_Receive(&hspi1, (uint8_t*)&(dataSend[0]), 3,20);
   //Init_Func();
   while (1)
   {
@@ -340,7 +340,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOE_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, S1_Pin|S2_Pin|S3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, S1_Pin|S2_Pin|S3_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pins : S1_Pin S2_Pin S3_Pin */
   GPIO_InitStruct.Pin = S1_Pin|S2_Pin|S3_Pin;
