@@ -7,6 +7,7 @@
 volatile sm_state master_sm_state;
 volatile uart_data uart_receive_buffer[BUFFER_SIZE],uart_receive_buffer[BUFFER_SIZE];
 volatile uint8_t uart_receive[UART_SIZE];
+volatile uint8_t uart_slave_receive[UART_SIZE];
 volatile uint8_t uart_receive_position, uart_use_position;
 volatile uint8_t spi_receive[3];
 volatile uint8_t slave_record=0;
