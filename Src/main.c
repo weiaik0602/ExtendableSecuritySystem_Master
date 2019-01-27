@@ -135,7 +135,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint8_t rubbish[]={1,2,3};
+  uint8_t rubbish[]={0,0,0};
   HAL_UART_Transmit(&huart7, (uint8_t*)&rubbish[0],3, 200);
   while (1)
   {
@@ -328,8 +328,6 @@ void Slave_Disable(uint8_t number){
 
 void DMA2S2_Func(uart_data data){
 	Slave_Enable(uart_receive[0]);
-	HAL_UART_Transmit(&huart7, (uint8_t*)&uart_receive[1], 3,500);
-	HAL_UART_Transmit(&huart7, (uint8_t*)&uart_receive[1], 3,500);
 	HAL_UART_Transmit(&huart7, (uint8_t*)&uart_receive[1], 3,500);
 	HAL_UART_Transmit(&huart7, (uint8_t*)&uart_receive[1], 3,500);
 
